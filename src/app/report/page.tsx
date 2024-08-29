@@ -1,27 +1,63 @@
 "use client";
-import { useState, useEffect, SetStateAction } from "react";
-import Swal from "sweetalert2"; // Updated import to use sweetalert2 directly
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import Swal from "sweetalert2";
+import axios from "axios";
+import Footer from "@/Components/Footer/page";
+import Navbar from "@/Components/Navbar/page";
+import { useRouter } from "next/navigation"; // Import useRouter
+
+interface Division {
+  id: string;
+  bn_name: string;
+  name: string; // Adding 'name' field for API submission
+}
+
+interface District {
+  id: string;
+  bn_name: string;
+  name: string; // Adding 'name' field for API submission
+  division_id: string;
+}
+
+interface Upazila {
+  id: string;
+  bn_name: string;
+  name: string; // Adding 'name' field for API submission
+  district_id: string;
+}
+
+interface Union {
+  id: string;
+  bn_name: string;
+  name: string; // Adding 'name' field for API submission
+  upazilla_id: string;
+}
 
 const ReportPage = () => {
-  const [divisions, setDivisions] = useState([]);
-  const [districts, setDistricts] = useState([]);
-  const [upazilas, setUpazilas] = useState([]);
-  const [unions, setUnions] = useState([]);
-  const [selectedDivision, setSelectedDivision] = useState("");
-  const [selectedDistrict, setSelectedDistrict] = useState("");
-  const [selectedUpazila, setSelectedUpazila] = useState("");
-  const [selectedUnion, setSelectedUnion] = useState("");
-  const [loading, setLoading] = useState(false); // Loader state
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [upazilas, setUpazilas] = useState<Upazila[]>([]);
+  const [unions, setUnions] = useState<Union[]>([]);
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const [selectedUpazila, setSelectedUpazila] = useState<string>("");
+  const [selectedUnion, setSelectedUnion] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const [reportDetails, setReportDetails] = useState({
     title: "",
     description: "",
     contactNumber: "",
+    imageLink: "", // Added imageLink state
   });
-  const [solveStatus, setSolveStatus] = useState(""); // New state for solveStatus
-  const [reviewed, setReviewed] = useState(false); //
+  const [solveStatus, setSolveStatus] = useState<string>("");
+  const [reviewed, setReviewed] = useState<boolean>(false);
+  const [imageFile, setImageFile] = useState<File | null>(null); // New state for image file
+
+  const router = useRouter(); // Initialize useRouter
+
   useEffect(() => {
     setLoading(true);
-    fetch("http://localhost:8000/divisions")
+    fetch("https://durniti-rodhv2.vercel.app/divisions")
       .then((res) => res.json())
       .then((data) => setDivisions(data))
       .catch((error) => console.error("Error fetching divisions:", error))
@@ -31,12 +67,13 @@ const ReportPage = () => {
   useEffect(() => {
     if (selectedDivision) {
       setLoading(true);
-      fetch(`http://localhost:8000/districts?division_id=${selectedDivision}`)
+      fetch(
+        `https://durniti-rodhv2.vercel.app/districts?division_id=${selectedDivision}`
+      )
         .then((res) => res.json())
         .then((data) => {
           const filteredDistricts = data.filter(
-            (district: { division_id: string }) =>
-              district.division_id === selectedDivision
+            (district: District) => district.division_id === selectedDivision
           );
           setDistricts(filteredDistricts);
         })
@@ -50,12 +87,13 @@ const ReportPage = () => {
   useEffect(() => {
     if (selectedDistrict) {
       setLoading(true);
-      fetch(`http://localhost:8000/upazilas?district_id=${selectedDistrict}`)
+      fetch(
+        `https://durniti-rodhv2.vercel.app/upazilas?district_id=${selectedDistrict}`
+      )
         .then((res) => res.json())
         .then((data) => {
           const filteredUpazilas = data.filter(
-            (upazila: { district_id: string }) =>
-              upazila.district_id === selectedDistrict
+            (upazila: Upazila) => upazila.district_id === selectedDistrict
           );
           setUpazilas(filteredUpazilas);
         })
@@ -69,11 +107,13 @@ const ReportPage = () => {
   useEffect(() => {
     if (selectedUpazila) {
       setLoading(true);
-      fetch(`http://localhost:8000/unions?upazila_id=${selectedUpazila}`)
+      fetch(
+        `https://durniti-rodhv2.vercel.app/unions?upazila_id=${selectedUpazila}`
+      )
         .then((res) => res.json())
         .then((data) => {
           const filteredUnions = data.filter(
-            (union) => union.upazilla_id === selectedUpazila
+            (union: Union) => union.upazilla_id === selectedUpazila
           );
           setUnions(filteredUnions);
         })
@@ -84,37 +124,31 @@ const ReportPage = () => {
     }
   }, [selectedUpazila]);
 
-  const handleDivisionChange = (event: {
-    target: { value: SetStateAction<string> };
-  }) => {
+  const handleDivisionChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setSelectedDivision(event.target.value);
     setSelectedDistrict("");
     setSelectedUpazila("");
     setSelectedUnion("");
   };
 
-  const handleDistrictChange = (event: {
-    target: { value: SetStateAction<string> };
-  }) => {
+  const handleDistrictChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setSelectedDistrict(event.target.value);
     setSelectedUpazila("");
     setSelectedUnion("");
   };
 
-  const handleUpazilaChange = (event: {
-    target: { value: SetStateAction<string> };
-  }) => {
+  const handleUpazilaChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setSelectedUpazila(event.target.value);
     setSelectedUnion("");
   };
 
-  const handleUnionChange = (event: {
-    target: { value: SetStateAction<string> };
-  }) => {
+  const handleUnionChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setSelectedUnion(event.target.value);
   };
 
-  const handleInputChange = (event: { target: { name: any; value: any } }) => {
+  const handleInputChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = event.target;
     setReportDetails({
       ...reportDetails,
@@ -122,18 +156,48 @@ const ReportPage = () => {
     });
   };
 
-  const handleSubmit = (event: { preventDefault: () => void }) => {
-    event.preventDefault();
+  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+
+      // Upload to ImageBB
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+
+      try {
+        const response = await axios.post(
+          "https://api.imgbb.com/1/upload",
+          formData,
+          {
+            params: { key: "84637e8bbffbf467ef488486fc948bf5" },
+          }
+        );
+        setReportDetails((prevDetails) => ({
+          ...prevDetails,
+          imageLink: response.data.data.url, // ImageBB response contains the image URL
+        }));
+      } catch (error) {
+        console.error("Error uploading image:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const selectedDivisionName =
-      divisions.find((div) => div.id === selectedDivision)?.bn_name || "";
+      divisions.find((div) => div.id === selectedDivision)?.name || ""; // Use name for API submission
     const selectedDistrictName =
-      districts.find((dist) => dist.id === selectedDistrict)?.bn_name || "";
+      districts.find((dist) => dist.id === selectedDistrict)?.name || ""; // Use name for API submission
     const selectedUpazilaName =
-      upazilas.find((up) => up.id === selectedUpazila)?.bn_name || "";
+      upazilas.find((up) => up.id === selectedUpazila)?.name || ""; // Use name for API submission
     const selectedUnionName =
-      unions.find((un) => un.id === selectedUnion)?.bn_name || "";
-    fetch("http://localhost:8000/reports", {
+      unions.find((un) => un.id === selectedUnion)?.name || ""; // Use name for API submission
+
+    fetch("https://durniti-rodhv2.vercel.app/reports", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -156,158 +220,150 @@ const ReportPage = () => {
           title: "Success!",
           text: "Your report has been submitted successfully.",
           confirmButtonColor: "#fd7e14",
-          onClose: () => {
-            setSelectedDivision("");
-            setSelectedDistrict("");
-            setSelectedUpazila("");
-            setSelectedUnion("");
-            setReportDetails({
-              title: "",
-              description: "",
-              contactNumber: "",
-            });
-          },
+        }).then(() => {
+          setSelectedDivision("");
+          setSelectedDistrict("");
+          setSelectedUpazila("");
+          setSelectedUnion("");
+          setReportDetails({
+            title: "",
+            description: "",
+            contactNumber: "",
+            imageLink: "", // Clear image link after submission
+          });
+          setImageFile(null); // Clear image file after submission
+          router.push("/"); // Navigate to homepage after submission
         });
       })
       .catch((error) => console.error("Error submitting report:", error));
   };
 
   return (
-    <div className="report-page bg-white p-8 rounded-lg shadow-lg border border-gray-200">
-      <h1 className="text-4xl mb-6 text-[#fd7e14] font-bold">
-        দুর্নীতি রিপোর্ট করুন
-      </h1>
-      <p className="mb-6 text-lg text-gray-700">
-        আপনার তথ্য সম্পূর্ণ নিরাপদ থাকবে
-      </p>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <label className="font-semibold text-[#fd7e14] text-lg">
-          বিভাগ:
-          {loading ? (
-            <span className="loading loading-spinner loading-lg ml-2"></span>
-          ) : (
-            <select
-              value={selectedDivision}
-              onChange={handleDivisionChange}
-              className="ml-2 p-3 border border-gray-300 rounded-lg w-full"
-            >
-              <option value="">বিভাগ নির্বাচন করুন</option>
-              {divisions.map((division) => (
-                <option key={division.id} value={division.id}>
-                  {division.bn_name}
-                </option>
-              ))}
-            </select>
-          )}
-        </label>
+    <>
+      <Navbar />
+      <div className="relative bg-[#e8f0f2] p-8 rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+        {/* Background animation */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#e8f0f2] to-[#fd7e14] opacity-20 animate-pulse"></div>
+        <h1 className="text-4xl mb-6 text-[#fd7e14] font-bold z-10 relative">
+          দুর্নীতি/অনিয়ম রিপোর্ট করুন
+        </h1>
+        <p className="mb-6 text-lg text-red-500 z-10 relative">
+          আপনার তথ্য সম্পূর্ণ নিরাপদ থাকবে।
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4 z-10 relative">
+          <label className="block text-lg font-semibold">বিভাগ</label>
+          <select
+            value={selectedDivision}
+            onChange={handleDivisionChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          >
+            <option value="">-- নির্বাচন করুন --</option>
+            {divisions.map((division) => (
+              <option key={division.id} value={division.id}>
+                {division.bn_name}
+              </option>
+            ))}
+          </select>
 
-        <label className="font-semibold text-[#fd7e14] text-lg">
-          জেলা:
-          {loading ? (
-            <span className="loading loading-spinner loading-lg ml-2"></span>
-          ) : (
-            <select
-              value={selectedDistrict}
-              onChange={handleDistrictChange}
-              className="ml-2 p-3 border border-gray-300 rounded-lg w-full"
-              disabled={!selectedDivision}
-            >
-              <option value="">জেলা নির্বাচন করুন</option>
-              {districts.map((district) => (
-                <option key={district.id} value={district.id}>
-                  {district.bn_name}
-                </option>
-              ))}
-            </select>
-          )}
-        </label>
+          <label className="block text-lg font-semibold">জেলা</label>
+          <select
+            value={selectedDistrict}
+            onChange={handleDistrictChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          >
+            <option value="">-- নির্বাচন করুন --</option>
+            {districts.map((district) => (
+              <option key={district.id} value={district.id}>
+                {district.bn_name}
+              </option>
+            ))}
+          </select>
 
-        <label className="font-semibold text-[#fd7e14] text-lg">
-          উপজেলা:
-          {loading ? (
-            <span className="loading loading-spinner loading-lg ml-2"></span>
-          ) : (
-            <select
-              value={selectedUpazila}
-              onChange={handleUpazilaChange}
-              className="ml-2 p-3 border border-gray-300 rounded-lg w-full"
-              disabled={!selectedDistrict}
-            >
-              <option value="">উপজেলা নির্বাচন করুন</option>
-              {upazilas.map((upazila) => (
-                <option key={upazila.id} value={upazila.id}>
-                  {upazila.bn_name}
-                </option>
-              ))}
-            </select>
-          )}
-        </label>
+          <label className="block text-lg font-semibold">উপজেলা</label>
+          <select
+            value={selectedUpazila}
+            onChange={handleUpazilaChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          >
+            <option value="">-- নির্বাচন করুন --</option>
+            {upazilas.map((upazila) => (
+              <option key={upazila.id} value={upazila.id}>
+                {upazila.bn_name}
+              </option>
+            ))}
+          </select>
 
-        <label className="font-semibold text-[#fd7e14] text-lg">
-          ইউনিয়ন:
-          {loading ? (
-            <span className="loading loading-spinner loading-lg ml-2"></span>
-          ) : (
-            <select
-              value={selectedUnion}
-              onChange={handleUnionChange}
-              className="ml-2 p-3 border border-gray-300 rounded-lg w-full"
-              disabled={!selectedUpazila || unions.length === 0}
-            >
-              <option value="">ইউনিয়ন নির্বাচন করুন</option>
-              {unions.map((union) => (
-                <option key={union.id} value={union.id}>
-                  {union.bn_name}
-                </option>
-              ))}
-            </select>
-          )}
-        </label>
+          <label className="block text-lg font-semibold">ইউনিয়ন</label>
+          <select
+            value={selectedUnion}
+            onChange={handleUnionChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          >
+            <option value="">-- নির্বাচন করুন --</option>
+            {unions.map((union) => (
+              <option key={union.id} value={union.id}>
+                {union.bn_name}
+              </option>
+            ))}
+          </select>
 
-        <label className="font-semibold text-[#fd7e14] text-lg">
-          শিরোনাম:
+          <label className="block text-lg font-semibold">শিরোনাম</label>
           <input
             type="text"
             name="title"
             value={reportDetails.title}
             onChange={handleInputChange}
-            className="ml-2 p-3 border border-gray-300 rounded-lg w-full"
-            placeholder="শিরোনাম লিখুন"
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
           />
-        </label>
 
-        <label className="font-semibold text-[#fd7e14] text-lg">
-          যোগাযোগের নম্বর:
+          <label className="block text-lg font-semibold">বিবরণ</label>
+          <textarea
+            name="description"
+            value={reportDetails.description}
+            onChange={handleInputChange}
+            rows={4}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          ></textarea>
+
+          <label className="block text-lg font-semibold">যোগাযোগ নম্বর</label>
           <input
             type="text"
             name="contactNumber"
             value={reportDetails.contactNumber}
             onChange={handleInputChange}
-            className="ml-2 p-3 border border-gray-300 rounded-lg w-full"
-            placeholder="যোগাযোগের নম্বর লিখুন"
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
           />
-        </label>
 
-        <label className="font-semibold text-[#fd7e14] text-lg">
-          বিবরণ:
-          <textarea
-            name="description"
-            value={reportDetails.description}
-            onChange={handleInputChange}
-            className="ml-2 p-3 border border-gray-300 rounded-lg w-full"
-            placeholder="বিবরণ লিখুন"
-            rows={6}
+          <label className="block text-lg font-semibold">ছবি আপলোড করুন</label>
+          <input
+            type="file"
+            onChange={handleImageChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
           />
-        </label>
 
-        <button
-          type="submit"
-          className="bg-[#fd7e14] text-white p-3 rounded-lg hover:bg-[#e56c0f] transition duration-200"
-        >
-          জমা দিন
-        </button>
-      </form>
-    </div>
+          {loading && (
+            <div className="w-full flex justify-center items-center py-4">
+              <div className="loading loading-spinner loading-lg"></div>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="w-full bg-[#fd7e14] text-white py-2 rounded-md transition-transform transform hover:scale-105"
+          >
+            রিপোর্ট জমা দিন
+          </button>
+        </form>
+      </div>
+      <Footer />
+    </>
   );
 };
 

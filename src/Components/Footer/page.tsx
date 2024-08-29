@@ -12,15 +12,6 @@ const Footer = () => {
             <p className="text-lg font-semibold mb-2">
               এই প্রকল্প সম্পূর্ণভাবে স্বেচ্ছাসেবী
             </p>
-            <a
-              href="https://www.facebook.com/supto622/"
-              className="text-md mb-4"
-            >
-              নির্মিত:{" "}
-              <span className="font-semibold">
-                BanglaSite Solutions | মোঃ সাহারিয়ার হোসেন সুপ্ত
-              </span>
-            </a>
           </div>
 
           {/* Contact Information */}
@@ -32,7 +23,7 @@ const Footer = () => {
                 href="mailto:info@example.com"
                 className="text-white underline"
               >
-                supto.cse.vu@gmail.com
+                banglasite.solutions@gmail.com
               </a>
             </p>
           </div>
