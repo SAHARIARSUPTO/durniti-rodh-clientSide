@@ -18,12 +18,12 @@ const Footer = () => {
           <div>
             <h4 className="text-xl font-bold mb-2">যোগাযোগ</h4>
             <p>
-              Email:{" "}
               <a
-                href="mailto:info@example.com"
+                href="https://www.facebook.com/profile.php?id=61564884819596"
                 className="text-white underline"
+                target="blank"
               >
-                banglasite.solutions@gmail.com
+                Facebook | দুর্নীতি রোধ
               </a>
             </p>
           </div>
